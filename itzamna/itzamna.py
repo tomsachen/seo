@@ -428,12 +428,12 @@ def doBias(command,user):
         return
 
     match = re.search(
-        '^\\\\(bias) (0|1|2|3|4) (u\\-band|g\\-band|r\\-band|i\\-band|z\\-band|clear|h\\-alpha)', command, re.IGNORECASE)
+        '^\\\\(bias) (0|1|2|3|4)', command, re.IGNORECASE)
     if(match):
     exposure = '0.1'
     binning = match.group(2)
-    filter = match.group(3)
-    send_message('Taking bias frame (filter: %s' % (filter))
+    filter = clear
+    send_message('Taking bias frame (binning: %s)' % binning)
 
     # IMAGE_FILENAME=${NAME}_${filter}_${EXPOSURE_SEC}s_bin${BINNING}_`date -u +"%y%m%d_%H%M%S"`__seo_${USER}_`printf "%04d" $COUNT`_RAW.fits
     fits = image_path + '%s_%s_%ss_bin%s_%s_%s_seo_%d_RAW.fits' % (
@@ -1437,7 +1437,7 @@ def getHelp(command, user=None):
                  # '>`\\track <on/off>` toggles telescope tracking\n' + \
                  # '>`\\nudge <dRA in arcmin> <dDEC in arcmin>` offsets the telescope pointing\n' + \
                  '>`\\image <exposure> <binning> <filter>` takes a picture\n' + \
-                 '>`\\bias <binning> <filter>` takes a bias frame\n' + \
+                 '>`\\bias <binning>` takes a bias frame\n' + \
                  '>`\\tostars` uploads recent images to <%s|stars> (run this command at the end of your session)\n' % stars_url
                  )
     send_message('\n')
@@ -1695,7 +1695,7 @@ commands = [
     ['^\\\\(crack)', doCrack],
     ['^\\\\(squeeze)', doSqueeze],
     ['^\\\\(image) ([0-9\\.]+) (0|1|2|3|4) (u\\-band|g\\-band|r\\-band|i\\-band|z\\-band|clear|h\\-alpha)', doImage],
-    ['^\\\\(bias) (0|1|2|3|4) (u\\-band|g\\-band|r\\-band|i\\-band|z\\-band|clear|h\\-alpha)', doBias],
+    ['^\\\\(bias) (0|1|2|3|4)', doBias],
     ['^\\\\(lock)', doLock],
     ['^\\\\(share) (on|off)', doShare],
     ['^\\\\(unlock)', doUnLock],
