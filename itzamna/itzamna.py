@@ -430,10 +430,13 @@ def doBias(command,user):
     match = re.search(
         '^\\\\(bias) (0|1|2|3|4)', command, re.IGNORECASE)
     if(match):
-    exposure = '0.1'
-    binning = match.group(2)
-    filter = clear
-    send_message('Taking bias frame (binning: %s)' % binning)
+        exposure = '0.1'
+        binning = match.group(2)
+        filter = clear
+        send_message('Taking bias frame (binning: %s)' % binning)
+    else:
+        logme('Error. Unexpected command format (%s).' % command)
+        return
 
     # IMAGE_FILENAME=${NAME}_${filter}_${EXPOSURE_SEC}s_bin${BINNING}_`date -u +"%y%m%d_%H%M%S"`__seo_${USER}_`printf "%04d" $COUNT`_RAW.fits
     fits = image_path + '%s_%s_%ss_bin%s_%s_%s_seo_%d_RAW.fits' % (
@@ -1632,7 +1635,7 @@ def doSimulate():
 #CHANGE THESE VALUES AS NEEDED#
 ###############################
 # run in simulate mode? restrict telescope commands
-simulate = False
+simulate = True
 # log file
 log_fname = 'itzamna.log'
 # name of channel assigned to telescope interface
