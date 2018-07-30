@@ -421,6 +421,39 @@ def doImage(command, user):
 
 # send alert message to slack
 
+def doBias(command,user):
+    # this command requires that user has telescope locked
+    if not lockedByYou(user):
+        send_message('Please lock the telescope before calling this command.')
+        return
+
+    match = re.search(
+        '^\\\\(bias) (0|1|2|3|4) (u\\-band|g\\-band|r\\-band|i\\-band|z\\-band|clear|h\\-alpha)', command, re.IGNORECASE)
+    if(match):
+    exposure = '0.1'
+    binning = match.group(2)
+    filter = match.group(3)
+    send_message('Taking bias frame (filter: %s' % (filter))
+
+    # IMAGE_FILENAME=${NAME}_${filter}_${EXPOSURE_SEC}s_bin${BINNING}_`date -u +"%y%m%d_%H%M%S"`__seo_${USER}_`printf "%04d" $COUNT`_RAW.fits
+    fits = image_path + '%s_%s_%ss_bin%s_%s_%s_seo_%d_RAW.fits' % (
+        'bias', filter, exposure, binning, datetime.datetime.utcnow().strftime('%y%m%d_%H%M%S'), 'itzamna', 0)
+    fits = fits.replace(' ', '_')
+    slackdebug('Taking image (%s)...' % (fits))
+    (output, error, pid) = runSubprocess(['pfilter', '%s' % filter], simulate)
+    (output, error, pid) = runSubprocess(
+        ['image', 'time=%s' % exposure, 'bin=%s' % binning, 'outfile=%s' % fits], simulate)
+    if not error:
+        send_message('Got image (%s).' % fits)
+        slackpreview(fits)
+    else:
+        send_message('Error. Image command failed (%s).' % fits)
+
+    (output, error, pid) = runSubprocess(['tx', 'track', 'on'], simulate)
+    # done track ha=15.0410 dec=0.0000
+    if not re.search('done track ha\\=[0-9\\+\\-\\.]+\\sdec\\=[0-9\\+\\-\\.]+', output):
+        send_message('Error. Could not turn telescope tracking ON.')
+
 
 def slackdebugalert(msg):
     msg = datetime.datetime.utcnow().strftime('%m-%d-%Y %H:%M:%S ') + msg
@@ -1404,6 +1437,7 @@ def getHelp(command, user=None):
                  # '>`\\track <on/off>` toggles telescope tracking\n' + \
                  # '>`\\nudge <dRA in arcmin> <dDEC in arcmin>` offsets the telescope pointing\n' + \
                  '>`\\image <exposure> <binning> <filter>` takes a picture\n' + \
+                 '>`\\bias <binning> <filter>` takes a bias frame\n' + \
                  '>`\\tostars` uploads recent images to <%s|stars> (run this command at the end of your session)\n' % stars_url
                  )
     send_message('\n')
@@ -1661,6 +1695,7 @@ commands = [
     ['^\\\\(crack)', doCrack],
     ['^\\\\(squeeze)', doSqueeze],
     ['^\\\\(image) ([0-9\\.]+) (0|1|2|3|4) (u\\-band|g\\-band|r\\-band|i\\-band|z\\-band|clear|h\\-alpha)', doImage],
+    ['^\\\\(bias) (0|1|2|3|4) (u\\-band|g\\-band|r\\-band|i\\-band|z\\-band|clear|h\\-alpha)', doBias],
     ['^\\\\(lock)', doLock],
     ['^\\\\(share) (on|off)', doShare],
     ['^\\\\(unlock)', doUnLock],
